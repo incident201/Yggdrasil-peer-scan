@@ -1,0 +1,69 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Glowing network mesh lines -->
+    <!-- Line: Center (54, 54) to Top (54, 30) -->
+    <path
+        android:pathData="M 54,54 L 54,30"
+        android:strokeColor="#00E676"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"/>
+
+    <!-- Line: Center (54, 54) to Bottom Left (33, 66) -->
+    <path
+        android:pathData="M 54,54 L 33,66"
+        android:strokeColor="#00E676"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"/>
+
+    <!-- Line: Center (54, 54) to Bottom Right (75, 66) -->
+    <path
+        android:pathData="M 54,54 L 75,66"
+        android:strokeColor="#00E676"
+        android:strokeWidth="3"
+        android:strokeLineCap="round"/>
+
+    <!-- Outer triangular ring -->
+    <path
+        android:pathData="M 54,30 L 33,66 L 75,66 Z"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2.5"
+        android:strokeLineJoin="round"
+        android:strokeLineCap="round"/>
+
+    <!-- Concentric central gateway halo -->
+    <path
+        android:pathData="M 54,54 m -15,0 a 15,15 0 1,1 30,0 a 15,15 0 1,1 -30,0"
+        android:strokeColor="#1000E676"
+        android:strokeWidth="5" />
+
+    <!-- Core server nexus (Center circle) -->
+    <path
+        android:pathData="M 54,54 m -9,0 a 9,9 0 1,1 18,0 a 9,9 0 1,1 -18,0"
+        android:fillColor="#00E676"/>
+
+    <!-- Node server 1 (Top circle) -->
+    <path
+        android:pathData="M 54,30 m -6,0 a 6,6 0 1,1 12,0 a 6,6 0 1,1 -12,0"
+        android:fillColor="#00E5FF"
+        android:strokeColor="#0C101B"
+        android:strokeWidth="1.5"/>
+
+    <!-- Node server 2 (Bottom Left circle) -->
+    <path
+        android:pathData="M 33,66 m -6,0 a 6,6 0 1,1 12,0 a 6,6 0 1,1 -12,0"
+        android:fillColor="#00E5FF"
+        android:strokeColor="#0C101B"
+        android:strokeWidth="1.5"/>
+
+    <!-- Node server 3 (Bottom Right circle) -->
+    <path
+        android:pathData="M 75,66 m -6,0 a 6,6 0 1,1 12,0 a 6,6 0 1,1 -12,0"
+        android:fillColor="#00E5FF"
+        android:strokeColor="#0C101B"
+        android:strokeWidth="1.5"/>
+
+</vector>
