@@ -84,12 +84,52 @@ object PeersFetcher {
      */
     fun fetchPeersFromPath(path: String): List<YggdrasilPeer> {
         val peers = mutableListOf<YggdrasilPeer>()
-        val cleanPath = path.trim().replace("\\", "/")
-        val folders = cleanPath.split("/")
+        val cleanPath = path.trim().replace("\\", "/").trim('/')
+        val folders = cleanPath.split("/").filter { it.isNotEmpty() }
         
-        // If the path is not a folder/sub-file, we treat "global" as folder
-        val folderName = if (folders.size > 1) folders[folders.size - 2] else "global"
-        val countryName = YggdrasilPeer.prettifyCountry(folderName)
+        val countryCode: String
+        val countryName: String
+        
+        if (folders.isNotEmpty()) {
+            val fileName = folders.last()
+            val baseFileName = if (fileName.contains('.')) fileName.substringBeforeLast('.') else fileName
+            val isGenericReadme = baseFileName.equals("README", ignoreCase = true) || 
+                                  baseFileName.equals("index", ignoreCase = true)
+            
+            if (!isGenericReadme) {
+                val countrySegment = baseFileName
+                if (folders.size > 1) {
+                    val regionSegment = folders[folders.size - 2]
+                    countryCode = "$regionSegment/$countrySegment"
+                    val regionPrettified = YggdrasilPeer.prettifyCountry(regionSegment)
+                    val countryPrettified = YggdrasilPeer.prettifyCountry(countrySegment)
+                    countryName = "$regionPrettified — $countryPrettified"
+                } else {
+                    countryCode = countrySegment
+                    countryName = YggdrasilPeer.prettifyCountry(countrySegment)
+                }
+            } else {
+                if (folders.size > 1) {
+                    val countrySegment = folders[folders.size - 2]
+                    if (folders.size > 2) {
+                        val regionSegment = folders[folders.size - 3]
+                        countryCode = "$regionSegment/$countrySegment"
+                        val regionPrettified = YggdrasilPeer.prettifyCountry(regionSegment)
+                        val countryPrettified = YggdrasilPeer.prettifyCountry(countrySegment)
+                        countryName = "$regionPrettified — $countryPrettified"
+                    } else {
+                        countryCode = countrySegment
+                        countryName = YggdrasilPeer.prettifyCountry(countrySegment)
+                    }
+                } else {
+                    countryCode = "global"
+                    countryName = "Global"
+                }
+            }
+        } else {
+            countryCode = "global"
+            countryName = "Global"
+        }
 
         val url = "https://raw.githubusercontent.com/yggdrasil-network/public-peers/master/$cleanPath"
         val request = Request.Builder()
@@ -101,7 +141,7 @@ object PeersFetcher {
             client.newCall(request).execute().use { response ->
                 if (response.isSuccessful) {
                     val body = response.body?.string() ?: ""
-                    peers.addAll(parsePeersFromMarkdown(body, folderName, countryName))
+                    peers.addAll(parsePeersFromMarkdown(body, countryCode, countryName))
                 }
             }
         } catch (e: Exception) {

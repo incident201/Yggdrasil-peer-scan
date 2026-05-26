@@ -83,7 +83,6 @@ fun MainScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Dialog controllers
-    var noteEditingPeer by remember { mutableStateOf<YggdrasilPeer?>(null) }
     var showCountryDialog by remember { mutableStateOf(false) }
     var showSortDialog by remember { mutableStateOf(false) }
 
@@ -411,7 +410,7 @@ fun MainScreen(
             // Options & Sorting Controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Start,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Country Filter and Sort Dropdowns Trigger Row
@@ -467,29 +466,6 @@ fun MainScreen(
                         Text(text = "Sort: $activeSortName", fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         Icon(imageVector = Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(12.dp))
                     }
-                }
-
-                // Favorites Only Filter Toggle
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { viewModel.setShowFavoritesOnly(!state.showFavoritesOnly) }
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                ) {
-                    Icon(
-                        imageVector = if (state.showFavoritesOnly) Icons.Default.Star else Icons.Default.StarOutline,
-                        contentDescription = null,
-                        tint = if (state.showFavoritesOnly) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "Star Only",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = if (state.showFavoritesOnly) MaterialTheme.colorScheme.onBackground else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
-                    )
                 }
             }
         }
@@ -554,8 +530,6 @@ fun MainScreen(
                     items(state.peersList, key = { it.uri }) { peer ->
                         PeerRowItem(
                             peer = peer,
-                            onToggleFavorite = { viewModel.toggleFavorite(peer) },
-                            onEditNotes = { noteEditingPeer = peer },
                             onCopyAddress = {
                                 clipboardManager.setText(AnnotatedString(peer.uri))
                                 Toast.makeText(context, "Copied address!\n${peer.uri}", Toast.LENGTH_SHORT).show()
@@ -655,16 +629,6 @@ fun MainScreen(
                         }
                     )
                     SortOptionRow(
-                        title = "Starred First",
-                        description = "Keep your starred bookmarks at the top of the list",
-                        isSelected = state.sortOrder == SortOrder.FAVORITES_FIRST,
-                        icon = Icons.Default.Star,
-                        onClick = {
-                            viewModel.setSortOrder(SortOrder.FAVORITES_FIRST)
-                            showSortDialog = false
-                        }
-                    )
-                    SortOptionRow(
                         title = "Region / Geographic alphabet",
                         description = "Sort alphabetically by region folder",
                         isSelected = state.sortOrder == SortOrder.COUNTRY_ASC,
@@ -689,70 +653,7 @@ fun MainScreen(
         }
     }
 
-    // Modal Note Editor Dialog
-    noteEditingPeer?.let { peer ->
-        var notesField by remember { mutableStateOf(peer.userNotes ?: "") }
-        Dialog(onDismissRequest = { noteEditingPeer = null }) {
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                color = MaterialTheme.colorScheme.surface,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Edit Bookmark Notes",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = peer.host,
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.primary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    OutlinedTextField(
-                        value = notesField,
-                        onValueChange = { notesField = it },
-                        placeholder = { Text("Add custom notes or nicknames...") },
-                        maxLines = 3,
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(10.dp)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        TextButton(onClick = { noteEditingPeer = null }) {
-                            Text("Discard", color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f))
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Button(
-                            onClick = {
-                                viewModel.updateNotes(peer, notesField.trim().ifEmpty { null })
-                                noteEditingPeer = null
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            shape = RoundedCornerShape(10.dp)
-                        ) {
-                            Text("Save Notes")
-                        }
-                    }
-                }
-            }
-        }
-    }
+    // Notes editor dialog removed
 }
 
 @Composable
@@ -894,8 +795,6 @@ fun SortOptionRow(
 @Composable
 fun PeerRowItem(
     peer: YggdrasilPeer,
-    onToggleFavorite: () -> Unit,
-    onEditNotes: () -> Unit,
     onCopyAddress: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(false) }
@@ -952,7 +851,7 @@ fun PeerRowItem(
                             )
                         }
                         
-                        // Region folder info
+                        // Region & Country info
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -983,15 +882,17 @@ fun PeerRowItem(
                     // Latency / connectivity badge
                     LatencyBadge(isOnline = peer.isOnline, latency = peer.latency, hasTested = peer.lastTestedTime > 0L)
 
-                    // Favorite Bookmark Star (Accessible click size)
+                    // Fast Copy Action Icon Button (visible when collapsed)
                     IconButton(
-                        onClick = onToggleFavorite,
-                        modifier = Modifier.size(36.dp)
+                        onClick = onCopyAddress,
+                        modifier = Modifier
+                            .size(36.dp)
+                            .testTag("copy_address_icon_button")
                     ) {
                         Icon(
-                            imageVector = if (peer.isFavorite) Icons.Default.Star else Icons.Default.StarOutline,
-                            contentDescription = "Favorite",
-                            tint = if (peer.isFavorite) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = "Copy URI",
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -1085,53 +986,6 @@ fun PeerRowItem(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f)
                             )
-                        }
-                    }
-
-                    // Bottom fast action bar inside card
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 10.dp),
-                        horizontalArrangement = Arrangement.End,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Note editor
-                        Button(
-                            onClick = onEditNotes,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.surface,
-                                contentColor = MaterialTheme.colorScheme.primary
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp),
-                            modifier = Modifier
-                                .height(28.dp)
-                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
-                        ) {
-                            Icon(imageVector = Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(10.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Tag Notes", fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                        }
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        // Fast Copy address into Clipboard
-                        Button(
-                            onClick = onCopyAddress,
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor = MaterialTheme.colorScheme.onPrimary
-                            ),
-                            shape = RoundedCornerShape(8.dp),
-                            contentPadding = PaddingValues(horizontal = 10.dp),
-                            modifier = Modifier
-                                .height(28.dp)
-                                .testTag("copy_address_button")
-                        ) {
-                            Icon(imageVector = Icons.Default.ContentCopy, contentDescription = null, modifier = Modifier.size(10.dp))
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text("Copy URL", fontSize = 11.sp, fontWeight = FontWeight.Black)
                         }
                     }
                 }
